@@ -1,0 +1,26 @@
+{
+  "name": "lightning-proxy-server",
+  "version": "0.1.0",
+  "description": "Lightning Proxy Server for non-custodial permanent connections",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arik-so/lightning-proxy-server.git"
+  },
+  "keywords": [
+    "lightning",
+    "network",
+    "proxy",
+    "server",
+    "node"
+  ],
+  "author": "Arik Sosman",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/arik-so/lightning-proxy-server/issues"
+  },
+  "homepage": "https://github.com/arik-so/lightning-proxy-server#readme"
+}
