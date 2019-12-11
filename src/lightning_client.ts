@@ -104,9 +104,11 @@ export default class LightningClient {
 		}
 	}
 
-	private autoRespond(message: LightningMessage) {
+	private autoRespond(message: LightningMessage): boolean {
 		if (message instanceof Message.InitMessage) {
+			console.log('Sending init message:', message.toBuffer().toString('hex'));
 			this.send(message.toBuffer());
+			return true;
 		}
 
 		if (message instanceof Message.PingMessage) {
@@ -116,7 +118,10 @@ export default class LightningClient {
 			});
 			console.log('Sending pong message:', pongMessage.toBuffer().toString('hex'));
 			this.send(pongMessage.toBuffer());
+			return true;
 		}
+
+		return false;
 	}
 
 	private destroy(error?: Error) {
