@@ -15,6 +15,9 @@ export default class LightningClient {
 	// unprocessed and undecrypted data
 	private pendingRawData: Buffer = LightningClient.ZERO_BUFFER;
 
+	// TODO (arik): queue of unread messages to be used once transmission handler is set
+	private messageQueue: Buffer[] = [];
+
 	private dataPromise: Promise<Buffer>;
 	private dataResolve;
 	private dataReject;
