@@ -1,6 +1,7 @@
 import {Socket} from 'net';
 import * as crypto from 'crypto';
 import {TransmissionHandler} from 'bolt08';
+import {LightningMessage, Message} from 'bolt02';
 
 export default class LightningClient {
 
@@ -11,7 +12,9 @@ export default class LightningClient {
 	public readonly id: string;
 	private readonly socket: Socket;
 
-	private pendingData: Buffer = LightningClient.ZERO_BUFFER;
+	// unprocessed and undecrypted data
+	private pendingRawData: Buffer = LightningClient.ZERO_BUFFER;
+
 	private dataPromise: Promise<Buffer>;
 	private dataResolve;
 	private dataReject;
@@ -27,14 +30,8 @@ export default class LightningClient {
 		this.socket.on('data', (data: Buffer) => {
 			console.log('Received:');
 			console.log(data.toString('hex'), '\n');
-			this.pendingData = Buffer.concat([this.pendingData, data]);
 
-			// resolve promises awaiting data input
-			if (this.dataPromise) {
-				this.dataResolve(this.pendingData);
-				this.pendingData = LightningClient.ZERO_BUFFER;
-				this.dataPromise = null;
-			}
+			this.processIncomingData(data);
 		});
 
 		this.socket.on('error', (error: Error) => {
@@ -65,6 +62,58 @@ export default class LightningClient {
 		this.transmissionHandler = handler;
 	}
 
+	private processIncomingData(data: Buffer) {
+		this.pendingRawData = Buffer.concat([this.pendingRawData, data]);
+
+		// without a transmission handler, we resolve it all
+		if (!this.transmissionHandler) {
+			if (this.dataPromise) {
+				this.dataResolve(this.pendingRawData);
+				this.pendingRawData = LightningClient.ZERO_BUFFER;
+				this.dataPromise = null;
+			}
+			return;
+		}
+
+		const decryptionResult = this.transmissionHandler.receive(this.pendingRawData);
+		this.pendingRawData = decryptionResult.unreadBuffer;
+		const decryptedResponse = decryptionResult.message;
+
+		if (!decryptedResponse || decryptedResponse.length === 0) {
+			console.log('Too short too decrypt');
+			return;
+		}
+
+		console.log('Decrypted:');
+		console.log(decryptedResponse.toString('hex'), '\n');
+
+		// parse the lightning message
+		const lightningMessage = LightningMessage.parse(decryptedResponse);
+		console.log('Decoded Lightning message of type:', lightningMessage.getTypeName(), `(${lightningMessage.getType()})`);
+		this.autoRespond(lightningMessage);
+
+		// resolve promises awaiting data input
+		if (this.dataPromise) {
+			this.dataResolve(decryptedResponse);
+			this.dataPromise = null;
+		}
+	}
+
+	private autoRespond(message: LightningMessage) {
+		if (message instanceof Message.InitMessage) {
+			this.send(message.toBuffer());
+		}
+
+		if (message instanceof Message.PingMessage) {
+			const values = message['values'];
+			const pongMessage = new Message.PongMessage({
+				ignored: Buffer.alloc(values.num_pong_bytes)
+			});
+			console.log('Sending pong message:', pongMessage.toBuffer().toString('hex'));
+			this.send(pongMessage.toBuffer());
+		}
+	}
+
 	private destroy(error?: Error) {
 		if (this.dataPromise) {
 			this.dataReject(error || new Error('connection closed'));
@@ -89,7 +138,7 @@ export default class LightningClient {
 		this.socket.write(data);
 	}
 
-	public async receiveData(): Promise<Buffer> {
+	public async receive(): Promise<Buffer> {
 		if (this.dataPromise) {
 			return this.dataPromise;
 		}
@@ -98,9 +147,10 @@ export default class LightningClient {
 			return Promise.reject(new Error('socket destroyed'));
 		}
 
-		if (this.pendingData.length > 0) {
-			this.pendingData = LightningClient.ZERO_BUFFER;
-			return Promise.resolve(this.pendingData);
+		if (this.pendingRawData.length > 0 && !this.transmissionHandler) {
+			// if we have a transmission handler, we need to wait until we have enough to decrypt
+			this.pendingRawData = LightningClient.ZERO_BUFFER;
+			return Promise.resolve(this.pendingRawData);
 		}
 
 		this.dataPromise = new Promise((resolve, reject) => {

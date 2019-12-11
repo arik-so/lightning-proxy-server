@@ -47,20 +47,20 @@ router.post('/connect', bodyParser.json(), expressAsyncHandler(async (req, res) 
 		client.write(message);
 	});
 
-	const response = await lightningClient.receiveData();
+	const response = await lightningClient.receive();
 	res.send({
 		id: lightningClient.id,
 		message: response.toString('hex')
 	});
 }));
 
-router.post('/advance-handshake/:id', bodyParser.json(), expressAsyncHandler(async (req, res) => {
+router.post('/handshake/:id', bodyParser.json(), expressAsyncHandler(async (req, res) => {
 	const clientId: string = req.params.id;
 	const lightningClient = LightningClient.getClient(clientId);
 
 	interface AdvanceHandshakeBody {
 		message: string,
-		keys?: {
+		keys: {
 			sending: string,
 			receiving: string,
 			chaining: string
@@ -69,19 +69,18 @@ router.post('/advance-handshake/:id', bodyParser.json(), expressAsyncHandler(asy
 
 	const body: AdvanceHandshakeBody = req.body;
 
-	if (body.keys) {
-		const transmissionHandler = new TransmissionHandler({
-			sendingKey: Buffer.from(body.keys.sending, 'hex'),
-			receivingKey: Buffer.from(body.keys.receiving, 'hex'),
-			chainingKey: Buffer.from(body.keys.chaining, 'hex')
-		});
-		lightningClient.setTransmissionHandler(transmissionHandler);
-	}
+	const transmissionHandler = new TransmissionHandler({
+		sendingKey: Buffer.from(body.keys.sending, 'hex'),
+		receivingKey: Buffer.from(body.keys.receiving, 'hex'),
+		chainingKey: Buffer.from(body.keys.chaining, 'hex')
+	});
 
 	const message = Buffer.from(body.message, 'hex');
 	lightningClient.send(message);
 
-	const response = await lightningClient.receiveData();
+	lightningClient.setTransmissionHandler(transmissionHandler);
+
+	const response = await lightningClient.receive();
 	res.send({
 		message: response.toString('hex')
 	});
