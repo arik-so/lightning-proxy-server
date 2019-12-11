@@ -79,6 +79,13 @@ export default class LightningClient {
 		if (this.socket.destroyed) {
 			throw new Error('socket destroyed');
 		}
+
+		if (this.transmissionHandler) {
+			const encryptedData = this.transmissionHandler.send(data);
+			this.socket.write(encryptedData);
+			return;
+		}
+
 		this.socket.write(data);
 	}
 
