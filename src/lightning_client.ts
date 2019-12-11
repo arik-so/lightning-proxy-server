@@ -99,6 +99,8 @@ export default class LightningClient {
 		if (this.dataPromise) {
 			this.dataResolve(decryptedResponse);
 			this.dataPromise = null;
+		} else {
+			this.messageQueue.push(decryptedResponse);
 		}
 	}
 
@@ -141,6 +143,12 @@ export default class LightningClient {
 		this.socket.write(data);
 	}
 
+	public readAllMessages(): Buffer[] {
+		const messages = this.messageQueue;
+		this.messageQueue = [];
+		return messages;
+	}
+
 	public async receive(): Promise<Buffer> {
 		if (this.dataPromise) {
 			return this.dataPromise;
@@ -148,6 +156,11 @@ export default class LightningClient {
 
 		if (this.socket.destroyed) {
 			return Promise.reject(new Error('socket destroyed'));
+		}
+
+		if (this.messageQueue.length > 0) {
+			const message = this.messageQueue.shift();
+			return Promise.resolve(message);
 		}
 
 		if (this.pendingRawData.length > 0 && !this.transmissionHandler) {
