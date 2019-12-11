@@ -1,10 +1,9 @@
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
 import * as expressAsyncHandler from 'express-async-handler';
-import * as crypto from 'crypto';
 import * as net from 'net';
-import * as util from 'util';
 import LightningClient from './lightning_client';
+import TransmissionHandler from 'bolt08/src/transmission_handler';
 
 export const router = express.Router();
 
@@ -33,7 +32,7 @@ router.post('/connect', bodyParser.json(), expressAsyncHandler(async (req, res) 
 
 	const publicKeyBuffer = Buffer.from(publicKey, 'hex');
 
-	const message = Buffer.from(body.message, 'base64');
+	const message = Buffer.from(body.message, 'hex');
 	if (message.length !== 50) {
 		throw new Error('First message must be 50 bytes');
 	}
@@ -51,6 +50,39 @@ router.post('/connect', bodyParser.json(), expressAsyncHandler(async (req, res) 
 	const response = await lightningClient.receiveData();
 	res.send({
 		id: lightningClient.id,
-		message: response.toString('base64')
+		message: response.toString('hex')
+	});
+}));
+
+router.post('/advance-handshake/:id', bodyParser.json(), expressAsyncHandler(async (req, res) => {
+	const clientId: string = req.params.id;
+	const lightningClient = LightningClient.getClient(clientId);
+
+	interface AdvanceHandshakeBody {
+		message: string,
+		keys?: {
+			sending: string,
+			receiving: string,
+			chaining: string
+		}
+	}
+
+	const body: AdvanceHandshakeBody = req.body;
+
+	if (body.keys) {
+		const transmissionHandler = new TransmissionHandler({
+			sendingKey: Buffer.from(body.keys.sending, 'hex'),
+			receivingKey: Buffer.from(body.keys.receiving, 'hex'),
+			chainingKey: Buffer.from(body.keys.chaining, 'hex')
+		});
+		lightningClient.setTransmissionHandler(transmissionHandler);
+	}
+
+	const message = Buffer.from(body.message, 'hex');
+	lightningClient.send(message);
+
+	const response = await lightningClient.receiveData();
+	res.send({
+		message: response.toString('hex')
 	});
 }));

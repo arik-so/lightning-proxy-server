@@ -15,6 +15,7 @@ export default class LightningClient {
 	private dataPromise: Promise<Buffer>;
 	private dataResolve;
 	private dataReject;
+
 	private transmissionHandler: TransmissionHandler;
 
 	constructor(socket: Socket) {
@@ -39,29 +40,55 @@ export default class LightningClient {
 		this.socket.on('error', (error: Error) => {
 			console.log('Error:');
 			console.log(error);
-
-			if (this.dataPromise) {
-				this.dataReject(error);
-				this.dataPromise = null;
-				this.socket.destroy();
-			}
+			this.destroy(error);
 		});
 
 		this.socket.on('close', () => {
 			console.log('Connection closed');
-
-			if (this.dataPromise) {
-				this.dataReject(new Error('connection closed'));
-				this.dataPromise = null;
-				this.socket.destroy();
-			}
+			this.destroy();
 		});
 
+	}
+
+	public static getClient(id: string): LightningClient {
+		const client = this.clients[id];
+		if (!client) {
+			throw new Error('client not found');
+		}
+		return client;
+	}
+
+	public setTransmissionHandler(handler: TransmissionHandler) {
+		if (this.transmissionHandler) {
+			throw new Error('transmission handler already set');
+		}
+		this.transmissionHandler = handler;
+	}
+
+	private destroy(error?: Error) {
+		if (this.dataPromise) {
+			this.dataReject(error || new Error('connection closed'));
+			this.dataPromise = null;
+		}
+		this.socket.destroy();
+		console.log('destroyed');
+		delete LightningClient.clients[this.id];
+	}
+
+	public send(data: Buffer) {
+		if (this.socket.destroyed) {
+			throw new Error('socket destroyed');
+		}
+		this.socket.write(data);
 	}
 
 	public async receiveData(): Promise<Buffer> {
 		if (this.dataPromise) {
 			return this.dataPromise;
+		}
+
+		if (this.socket.destroyed) {
+			return Promise.reject(new Error('socket destroyed'));
 		}
 
 		if (this.pendingData.length > 0) {
