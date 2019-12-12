@@ -1,16 +1,25 @@
 # lightning-proxy-server
 
+A non-custodial, proxy-like service that handles communication with the Lightning Network, mimicking the 
+behavior of a full-fledged Lightning node without access to private keys.
+
 ## Flow
 
-The proxy server is a non-custodial service that handles the communication with the Lightning Network.
+To act as a Lightning node, the proxy server relies on a client to negotiate a Lightning protocol handshake 
+as outlined in BOLT 8.
 
-It mimics the behavior of a full-fledged Lightning node without access to any private keys.
+To do so, the client initially sends a message to the server instructing it which peer to connect to,
+alongside a 50-byte blob the server is to send to that peer as part of the initial TCP message.
 
-Instead, whenever a signature is necessary to continue executing the protocol, the service delegates it to
-the client by means of either a push notification or a websocket or another notification mechanism.
+As soon as the response is received, the proxy immediately forwards it to the client, thereby enabling it
+to derive the communication keys, as well as the final blob to forward to the peer.
 
-To act as a Lightning node, the proxy client merely need to go through Lightning's handshake protocol as
-outline in BOLT 8, and submit the communication keys to the proxy server.
+The client shares the communication keys with the proxy such that the proxy can maintain the connection
+without the client present.
+
+When the client's presence is necessary, such as to provide a signature to continue executing the protocol, 
+the proxy summons the client by means of either a push notification, a websocket, or some other 
+notification mechanism.
 
 [![Flow Diagram](https://github.com/arik-so/lightning-proxy-server/blob/master/docs/flow.png?raw=true)](https://mermaidjs.github.io/mermaid-live-editor/#/edit/eyJjb2RlIjoic2VxdWVuY2VEaWFncmFtXG4gICAgcGFydGljaXBhbnQgTGlnaHRuaW5nIFByb3h5IENsaWVudCAjIExQQ1xuICAgIHBhcnRpY2lwYW50IExpZ2h0bmluZyBQcm94eSBTZXJ2ZXIgIyBMUFNcbiAgICBwYXJ0aWNpcGFudCBMTkRcbiAgICAjIExpZ2h0bmluZyBQcm94eSBDbGllbnQtPj5MaWdodG5pbmcgUHJveHkgQ2xpZW50OiBHZW5lcmF0ZSBcbiAgICBMaWdodG5pbmcgUHJveHkgQ2xpZW50LT4-TGlnaHRuaW5nIFByb3h5IFNlcnZlcjogTE5EJ3MgdXJsICYgcHVia2V5LCA8aGFuZHNoYWtlX2ZpcnN0X2FjdD5cbiAgICBMaWdodG5pbmcgUHJveHkgU2VydmVyLT4-TE5EOiA8aGFuZHNoYWtlX2ZpcnN0X2FjdD5cbiAgICBMTkQtPj5MaWdodG5pbmcgUHJveHkgU2VydmVyOiA8aGFuZHNoYWtlX3NlY29uZF9hY3Q-XG4gICAgTGlnaHRuaW5nIFByb3h5IFNlcnZlci0-PkxpZ2h0bmluZyBQcm94eSBDbGllbnQ6IDxoYW5kc2hha2Vfc2Vjb25kX2FjdD5cbiAgICBMaWdodG5pbmcgUHJveHkgQ2xpZW50LT4-TGlnaHRuaW5nIFByb3h5IFNlcnZlcjogPGhhbmRzaGFrZV90aGlyZF9hY3Q-LCBrZXlzIGZvciBzZW5kaW5nLCByZWNlaXZpbmcgJiBjaGFpbmluZ1xuICAgIExpZ2h0bmluZyBQcm94eSBTZXJ2ZXItPj5MTkQ6IDxoYW5kc2hha2VfdGhpcmRfYWN0PiwgPGluaXRfbWVzc2FnZT5cbiAgICBMTkQtPj5MaWdodG5pbmcgUHJveHkgU2VydmVyOiA8aW5pdF9tZXNzYWdlPlxuXG5Ob3RlIGxlZnQgb2YgTE5EOiBTb21lIHRpbWUgcGFzc2VzXG5cbiAgICBMTkQtPj5MaWdodG5pbmcgUHJveHkgU2VydmVyOiA8cGluZz5cbiAgICBMaWdodG5pbmcgUHJveHkgU2VydmVyLT4-TE5EOiA8cG9uZz5cblxuTm90ZSBsZWZ0IG9mIExORDogTW9yZSB0aW1lIHBhc3Nlc1xuXG4gICAgTE5ELT4-TGlnaHRuaW5nIFByb3h5IFNlcnZlcjogb3BlbiBjaGFubmVsP1xuICAgIExpZ2h0bmluZyBQcm94eSBTZXJ2ZXItPj5MaWdodG5pbmcgUHJveHkgQ2xpZW50OiBvcGVuIGNoYW5uZWwgc2lnbmF0dXJlP1xuICAgIExpZ2h0bmluZyBQcm94eSBDbGllbnQtPj5MaWdodG5pbmcgUHJveHkgU2VydmVyOiBvcGVuIGNoYW5uZWwgc2lnbmF0dXJlXG4gICAgTGlnaHRuaW5nIFByb3h5IFNlcnZlci0-PkxORDogYWNjZXB0IGNoYW5uZWxcblxuIiwibWVybWFpZCI6eyJ0aGVtZSI6ImRlZmF1bHQifX0)
 
