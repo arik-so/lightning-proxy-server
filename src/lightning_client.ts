@@ -39,7 +39,7 @@ export default class LightningClient {
 
 		this.socket.on('error', (error: Error) => {
 			console.log('Error:');
-			console.log(error);
+			console.trace(error);
 			this.destroy(error);
 		});
 
