@@ -90,6 +90,31 @@ extending the push notification protocol to support background handshake renegot
 As with routing payments, however, this must not happen too frequently, lest the mobile operating system penalize the
 app and thus, the user.
 
+### MitM: Mallory's Malice
+
+There are a bunch of security considerations to account for in the event of a malicious proxy. With access to the 
+communication keys, it can in principle do the following: 
+
+- Receive messages and not inform the client.
+- Choose not to forward messages from the client.
+- Malleate messages from the client before forwarding them.
+- Send messages of its own without the client's instruction.
+
+In isolation, most of the above behaviors make sense, such as in the ping/pong scenario. The client need not know about
+every ping, and the server should automatically reply with a pong. However, when it comes to channel management, the 
+issue becomes trickier. There are several attacks the proxy could perform on the client.
+
+- Receive an `open_channel` message, and, rather than informing the client, respond with an accept_channel with a 
+`funding_pubkey` of its own.
+- Receive an `open_channel` message but, when forwarding it to the client for a response, replace the `funding_pubkey`
+presented to the client.
+- Forward an `open_channel` message from the client to the peer, but substitute the entry for `funding_pubkey`. This
+grants Mallory only limited benefit, however, as she herself would then have to fund the channel.
+
+In general, though, if the client runts even as much as an SPV client or an independent API for blockchain data 
+verification, it can then check whether channels have been funded to the addresses it would expect, so all of these 
+attacks should be mitigable.
+
 ## License
 
 MIT
