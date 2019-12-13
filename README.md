@@ -111,7 +111,7 @@ presented to the client.
 - Forward an `open_channel` message from the client to the peer, but substitute the entry for `funding_pubkey`. This
 grants Mallory only limited benefit, however, as she herself would then have to fund the channel.
 
-In general, though, if the client runts even as much as an SPV client or an independent API for blockchain data 
+In general, though, if the client runs even as much as an SPV client or an independent API for blockchain data 
 verification, it can then check whether channels have been funded to the addresses it would expect, so all of these 
 attacks should be mitigable.
 
