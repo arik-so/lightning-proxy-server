@@ -9,6 +9,7 @@ import {InitMessage} from 'bolt02/src/messages/init';
 
 const assert = chai.assert;
 
+// Example for potential external client
 describe('Web Client Integration Test', () => {
 
 	let testServer: SuperTest<Test>;
