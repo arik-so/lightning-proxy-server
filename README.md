@@ -69,7 +69,7 @@ prove challenging because the TCP sockets need to be kept running. As soon as a 
 is required to renegotiate the handshake. That means that if migration or software update operations require restarting
 nodes, the users may be forced to go offline until they can negotiate a new handshake.
 
-Issues involving scalability can be solved, however, by restarting down nodes gracefully, such as waiting for users to
+Issues involving scalability can be solved, however, by restarting nodes gracefully, such as waiting for users to
 come online so new handshakes could be negotiated instantly, and isolating the TCP socket service from the remainder
 of the software to minimize the causes that may necessitate a connection reset.
 
