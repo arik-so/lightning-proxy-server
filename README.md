@@ -25,7 +25,7 @@ notification mechanism.
 
 ## Future Musings
 
-## Mobile Wallet
+### Mobile Wallet
 
 A promising use case involving an irregularly connected client is mobile. A mobile phone, having facilitated the 
 initial handshake and a thereupon very infrequently opened app, could receive push notifications for important events
@@ -37,7 +37,7 @@ provided the hosting operating system does not kill the process in the fractions
 couple ECDSA signatures. The benefit is that rather than having to constantly keep the app running in the background,
 networking and signing operations are invoked iff they are strictly necessary.
 
-## Multiple Devices
+### Multiple Devices
 
 If one were to couple the proxy service with a user login system, whereby the node's private keys were encrypted with
 some key material derived from the user's credentials, this Lightning node would automatically become accessible from
