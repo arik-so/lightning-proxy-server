@@ -45,7 +45,7 @@ multiple devices, be they mobile phones or browsers.
 
 ## Limitations
 
-This architecture does not come without a bunch of limitations. Some should be fairly simple to mitigate, but others
+This architecture does not come without a deluge of limitations. Some should be fairly simple to mitigate, but others
 might entail a lot of additional engineering work.
 
 ### Privacy
