@@ -32,7 +32,7 @@
 		"bolt02": "^0.1.2",
 		"bolt08": "^0.2.6",
 		"debug": "^4.1.1",
-		"express": "^4.17.1",
+		"express": "^4.17.3",
 		"express-async-handler": "^1.1.4"
 	},
 	"devDependencies": {
